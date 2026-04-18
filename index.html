@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BT Control</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #00e5a0;
+    --accent2: #00b8ff;
+    --text: #f0f0f5;
+    --text2: #8888a0;
+    --text3: #55556a;
+    --danger: #ff4f6a;
+    --warn: #ffb830;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; position: relative; }
+  .logo-icon svg { width: 100%; height: 100%; }
+  .logo-text { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .logo-text span { color: var(--accent); }
+  .status-pill { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
+  .status-dot.scanning { background: var(--warn); animation: blink 1s infinite; }
+  .status-dot.connected { background: var(--accent); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Scan button */
+  .scan-area { text-align: center; padding: 3rem 1rem; }
+  .scan-btn {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 14px 32px; border-radius: var(--radius);
+    cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .scan-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--accent); opacity: 0; transition: opacity 0.2s;
+  }
+  .scan-btn:hover::before { opacity: 0.08; }
+  .scan-btn:active { transform: scale(0.98); }
+  .scan-btn .bt-icon { font-size: 18px; }
+  .scan-hint { margin-top: 1rem; font-size: 13px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* No BT warning */
+  .no-bt { background: rgba(255,75,106,0.08); border: 1px solid rgba(255,75,106,0.2); border-radius: var(--radius); padding: 1.5rem; text-align: center; margin: 2rem 0; }
+  .no-bt h3 { color: var(--danger); font-size: 16px; margin-bottom: 0.5rem; }
+  .no-bt p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .no-bt code { font-family: 'DM Mono', monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+  /* Device list */
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; margin-bottom: 1rem; }
+  .devices-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .device-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
+    cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .device-card::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .device-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .device-card:hover::after { opacity: 0.04; }
+  .device-card.active { border-color: var(--accent); }
+  .device-card.active::after { opacity: 0.06; }
+  .device-card > * { position: relative; z-index: 1; }
+  .device-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+  .device-icon-wrap { width: 44px; height: 44px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .device-connected-badge { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.2); padding: 3px 8px; border-radius: 20px; }
+  .device-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .device-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+  .device-connect-btn {
+    width: 100%; margin-top: 0.75rem; padding: 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .device-connect-btn:hover { background: var(--surface2); }
+  .device-connect-btn.connected { border-color: rgba(0,229,160,0.3); color: var(--accent); }
+  .device-connect-btn.disconnecting { color: var(--danger); border-color: rgba(255,79,106,0.3); }
+
+  /* Controls panel */
+  .controls-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1.5rem; animation: fadeUp 0.3s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .panel-device { display: flex; align-items: center; gap: 10px; }
+  .panel-icon { font-size: 24px; }
+  .panel-name { font-size: 17px; font-weight: 600; }
+  .panel-rssi { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+  /* Battery */
+  .battery-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+  .battery-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .battery-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.5s; }
+  .battery-fill.low { background: var(--danger); }
+  .battery-fill.mid { background: var(--warn); }
+  .battery-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); min-width: 36px; text-align: right; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 1.5rem; }
+  .tab { flex: 1; padding: 7px; border-radius: 8px; border: none; background: transparent; color: var(--text3); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Playback */
+  .now-playing { background: var(--surface2); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 12px; }
+  .now-playing-art { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .now-playing-info { flex: 1; min-width: 0; }
+  .now-playing-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now-playing-sub { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .heart-btn { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text3); transition: all 0.15s; padding: 4px; }
+  .heart-btn.liked { color: var(--danger); }
+
+  /* Progress bar */
+  .progress-area { margin-bottom: 1.25rem; }
+  .progress-track { width: 100%; height: 4px; background: var(--surface2); border-radius: 2px; cursor: pointer; margin-bottom: 6px; position: relative; }
+  .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s linear; pointer-events: none; }
+  .progress-times { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+  /* Playback controls */
+  .playback-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 1.5rem; }
+  .ctrl-btn { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 20px; padding: 8px; border-radius: 50%; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+  .ctrl-btn:hover { color: var(--text); background: var(--surface2); }
+  .ctrl-btn.active { color: var(--accent); }
+  .play-pause-btn { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; font-size: 22px; color: #000; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .play-pause-btn:hover { transform: scale(1.05); background: #00ffb3; }
+  .play-pause-btn:active { transform: scale(0.96); }
+
+  /* Volume */
+  .vol-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+  .vol-icon { font-size: 16px; color: var(--text3); width: 20px; text-align: center; }
+  .slider-track { flex: 1; position: relative; height: 4px; background: var(--surface2); border-radius: 2px; cursor: pointer; }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); pointer-events: none; transition: width 0.05s; }
+  input[type=range].custom { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: transparent; cursor: pointer; position: relative; z-index: 1; }
+  input[type=range].custom::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--accent); cursor: pointer; }
+  input[type=range].custom::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--accent); cursor: pointer; border: none; }
+  .vol-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); width: 36px; text-align: right; }
+
+  /* EQ */
+  .eq-grid { display: flex; gap: 8px; align-items: flex-end; }
+  .eq-band-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .eq-slider-wrap { height: 100px; display: flex; align-items: center; justify-content: center; }
+  input[type=range].eq-slider { -webkit-appearance: none; appearance: none; writing-mode: vertical-lr; direction: rtl; width: 4px; height: 90px; background: var(--surface2); border-radius: 2px; cursor: pointer; position: relative; }
+  input[type=range].eq-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--accent); cursor: pointer; }
+  input[type=range].eq-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--accent); cursor: pointer; border: none; }
+  .eq-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); }
+  .eq-val { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); }
+  .eq-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1rem; }
+  .eq-preset { font-family: 'DM Mono', monospace; font-size: 11px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .eq-preset:hover { border-color: var(--accent); color: var(--accent); }
+  .eq-preset.active { background: rgba(0,229,160,0.1); border-color: var(--accent); color: var(--accent); }
+
+  /* Settings */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 14px; font-weight: 500; }
+  .setting-sub { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border2); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--text3); transition: all 0.2s; }
+  .toggle.on { background: rgba(0,229,160,0.15); border-color: var(--accent); }
+  .toggle.on::after { left: 23px; background: var(--accent); }
+  .setting-select { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'Syne', sans-serif; font-size: 13px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+
+  /* Mode chips */
+  .mode-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-chip { font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.15s; }
+  .mode-chip:hover { border-color: var(--border2); color: var(--text); }
+  .mode-chip.active { background: rgba(0,229,160,0.1); border-color: var(--accent); color: var(--accent); }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 30px; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; font-family: 'DM Mono', monospace; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="10" fill="#111118"/>
+          <path d="M18 8 L18 28 M18 8 L24 14 L18 20 L24 26" stroke="#00e5a0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 20 L12 14" stroke="#00e5a0" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">BT<span>Control</span></span>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Ready</span>
+    </div>
+  </div>
+
+  <!-- No Bluetooth warning -->
+  <div class="no-bt hidden" id="no-bt-warn">
+    <h3>⚠ Web Bluetooth Not Available</h3>
+    <p>Your browser doesn't support Web Bluetooth.<br>
+    Please use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on desktop.<br>
+    Also enable: <code>chrome://flags/#enable-web-bluetooth</code> if needed.</p>
+  </div>
+
+  <!-- Scan area -->
+  <div class="scan-area" id="scan-area">
+    <button class="scan-btn" id="scan-btn">
+      <span class="bt-icon">⬡</span>
+      <span id="scan-btn-text">Scan for Devices</span>
+    </button>
+    <p class="scan-hint">Uses Web Bluetooth API — Chrome/Edge required</p>
+  </div>
+
+  <!-- Paired devices -->
+  <div id="devices-section" class="hidden">
+    <div class="section-label">Discovered devices</div>
+    <div class="devices-grid" id="devices-grid"></div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls-panel" class="controls-panel hidden">
+    <div class="panel-header">
+      <div class="panel-device">
+        <span class="panel-icon" id="panel-icon">🎧</span>
+        <div>
+          <div class="panel-name" id="panel-name">Device</div>
+          <div class="panel-rssi" id="panel-rssi">Connected via BLE</div>
+        </div>
+      </div>
+      <button class="device-connect-btn disconnecting" style="width:auto;padding:6px 16px;" id="main-disconnect">Disconnect</button>
+    </div>
+
+    <!-- Battery -->
+    <div class="battery-row">
+      <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;width:52px;">Battery</span>
+      <div class="battery-track"><div class="battery-fill" id="battery-fill" style="width:0%"></div></div>
+      <span class="battery-pct" id="battery-pct">—</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="playback">Playback</button>
+      <button class="tab" data-tab="equalizer">Equalizer</button>
+      <button class="tab" data-tab="modes">Modes</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+
+    <!-- Playback Tab -->
+    <div class="tab-content active" id="tab-playback">
+      <div class="now-playing">
+        <div class="now-playing-art" id="np-art">🎵</div>
+        <div class="now-playing-info">
+          <div class="now-playing-title" id="np-title">No media playing</div>
+          <div class="now-playing-sub" id="np-sub">—</div>
+        </div>
+        <button class="heart-btn" id="heart-btn">♡</button>
+      </div>
+
+      <div class="progress-area">
+        <div class="progress-track" id="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-times">
+          <span id="time-cur">0:00</span>
+          <span id="time-dur">0:00</span>
+        </div>
+      </div>
+
+      <div class="playback-controls">
+        <button class="ctrl-btn" id="btn-shuffle" title="Shuffle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"/><polyline points="4 20 21 3"/>
+            <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+            <line x1="4" y1="4" x2="9" y2="9"/>
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="btn-prev" title="Previous">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+          </svg>
+        </button>
+        <button class="play-pause-btn" id="btn-play">▶</button>
+        <button class="ctrl-btn" id="btn-next" title="Next">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="btn-repeat" title="Repeat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="vol-row">
+        <span class="vol-icon">🔈</span>
+        <div class="slider-track" style="flex:1;position:relative;cursor:pointer;">
+          <div class="slider-fill" id="vol-fill" style="width:60%;"></div>
+          <input type="range" class="custom" id="vol-slider" min="0" max="100" value="60" step="1" style="position:absolute;inset:0;height:4px;opacity:0;cursor:pointer;width:100%;">
+        </div>
+        <span class="vol-icon">🔊</span>
+        <span class="vol-pct" id="vol-pct">60%</span>
+        <button class="ctrl-btn" id="mute-btn" style="font-size:16px;" title="Mute">🔊</button>
+      </div>
+    </div>
+
+    <!-- Equalizer Tab -->
+    <div class="tab-content" id="tab-equalizer">
+      <div class="section-label">5-Band Equalizer</div>
+      <div class="eq-grid" id="eq-grid"></div>
+      <div class="eq-presets" id="eq-presets"></div>
+    </div>
+
+    <!-- Modes Tab -->
+    <div class="tab-content" id="tab-modes">
+      <div class="section-label" style="margin-bottom:0.75rem;">Sound Mode</div>
+      <div class="mode-chips" id="mode-chips"></div>
+      <div class="divider"></div>
+      <div class="section-label" style="margin-bottom:0.75rem;">Surround</div>
+      <div class="mode-chips" id="surround-chips"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab-content" id="tab-settings">
+      <div id="settings-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  device: null,
+  server: null,
+  services: {},
+  chars: {},
+  volume: 60,
+  prevVol: 60,
+  muted: false,
+  playing: false,
+  shuffle: false,
+  repeat: false,
+  liked: false,
+  progress: 0,
+  duration: 213,
+  progressTimer: null,
+  battery: null,
+  eq: [50, 55, 50, 58, 46],
+  mode: 'Normal',
+  surround: 'Off',
+  settings: {
+    autoConnect: true,
+    lowLatency: false,
+    loudnessEq: false,
+    powerOff: '30 min',
+  }
+};
+
+const tracks = [
+  { title: 'Midnight Echoes', artist: 'Luna Waves', art: '🌙', dur: 213 },
+  { title: 'Neon Drift', artist: 'Synthwave Collective', art: '⚡', dur: 187 },
+  { title: 'Quiet Storm', artist: 'The Ambient', art: '🌊', dur: 244 },
+  { title: 'Digital Garden', artist: 'Future Botanics', art: '🌿', dur: 198 },
+];
+let trackIdx = 0;
+
+const eqBands = ['60Hz','250Hz','1kHz','4kHz','16kHz'];
+const eqPresets = {
+  Flat:   [50,50,50,50,50],
+  Bass:   [80,70,50,40,35],
+  Treble: [35,40,50,70,80],
+  Vocal:  [40,55,70,60,45],
+  Rock:   [65,45,40,55,60],
+};
+const modes = ['Normal','Noise Cancel','Transparency','Wind Block'];
+const surrounds = ['Off','Concert Hall','Stadium','Club','Studio'];
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function toast(msg, dur=2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function fmt(s) {
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function setStatus(txt, type='') {
+  document.getElementById('status-text').textContent = txt;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (type ? ' '+type : '');
+}
+
+// ── Bluetooth ──────────────────────────────────────────────────────────────
+const hasBT = navigator.bluetooth !== undefined;
+
+if (!hasBT) {
+  document.getElementById('no-bt-warn').classList.remove('hidden');
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('scan-btn').style.opacity = '0.4';
+}
+
+document.getElementById('scan-btn').addEventListener('click', async () => {
+  if (!hasBT) { toast('Web Bluetooth not supported'); return; }
+
+  setStatus('Scanning…', 'scanning');
+  const btnText = document.getElementById('scan-btn-text');
+  btnText.innerHTML = '<span class="spinner"></span> Scanning…';
+
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [
+        'battery_service',
+        'generic_access',
+        'device_information',
+        '0000110b-0000-1000-8000-00805f9b34fb', // A2DP sink
+        '0000110e-0000-1000-8000-00805f9b34fb', // AVRCP
+        '0000180f-0000-1000-8000-00805f9b34fb', // Battery
+        '00001804-0000-1000-8000-00805f9b34fb', // TX Power
+      ]
+    });
+
+    state.device = device;
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+
+    addDeviceCard(device);
+    document.getElementById('devices-section').classList.remove('hidden');
+    setStatus('Connecting…', 'scanning');
+    btnText.textContent = 'Scan for Devices';
+
+    await connectDevice(device);
+
+  } catch(e) {
+    if (e.name !== 'NotFoundError') toast('Error: ' + e.message);
+    setStatus('Ready');
+    btnText.textContent = 'Scan for Devices';
+  }
+});
+
+const discoveredDevices = new Map();
+
+function addDeviceCard(device) {
+  if (discoveredDevices.has(device.id)) return;
+  discoveredDevices.set(device.id, device);
+  renderDevices();
+}
+
+function renderDevices() {
+  const grid = document.getElementById('devices-grid');
+  grid.innerHTML = '';
+  for (const [id, dev] of discoveredDevices) {
+    const isConnected = state.device && state.device.id === id && state.server && state.server.connected;
+    const icon = guessIcon(dev.name || '');
+    const card = document.createElement('div');
+    card.className = 'device-card' + (isConnected ? ' active' : '');
+    card.innerHTML = `
+      <div class="device-top">
+        <div class="device-icon-wrap">${icon}</div>
+        ${isConnected ? '<span class="device-connected-badge">● Connected</span>' : ''}
+      </div>
+      <div class="device-name">${dev.name || 'Unknown Device'}</div>
+      <div class="device-id">${id.substring(0,16)}…</div>
+      <button class="device-connect-btn ${isConnected ? 'connected' : ''}" data-id="${id}">
+        ${isConnected ? 'Connected ✓' : 'Connect'}
+      </button>
+    `;
+    card.querySelector('button').addEventListener('click', () => {
+      if (isConnected) disconnectDevice();
+      else connectDevice(dev);
+    });
+    grid.appendChild(card);
+  }
+}
+
+function guessIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes('speaker') || n.includes('jbl') || n.includes('bose') || n.includes('sonos')) return '🔊';
+  if (n.includes('airpods') || n.includes('earbud') || n.includes('buds')) return '🎵';
+  if (n.includes('watch')) return '⌚';
+  if (n.includes('phone')) return '📱';
+  if (n.includes('keyboard')) return '⌨️';
+  if (n.includes('mouse')) return '🖱️';
+  return '🎧';
+}
+
+async function connectDevice(device) {
+  try {
+    setStatus('Connecting…', 'scanning');
+    const server = await device.gatt.connect();
+    state.server = server;
+
+    // Try reading battery
+    try {
+      const bSvc = await server.getPrimaryService('battery_service');
+      const bChar = await bSvc.getCharacteristic('battery_level');
+      const val = await bChar.readValue();
+      state.battery = val.getUint8(0);
+    } catch(e) {
+      state.battery = null;
+    }
+
+    onConnected(device);
+  } catch(e) {
+    toast('Connection failed: ' + (e.message || e));
+    setStatus('Ready');
+  }
+}
+
+function onConnected(device) {
+  setStatus('Connected', 'connected');
+  renderDevices();
+  showControls(device);
+  toast('Connected to ' + (device.name || 'device'));
+}
+
+function onDisconnected() {
+  state.server = null;
+  setStatus('Ready');
+  document.getElementById('controls-panel').classList.add('hidden');
+  renderDevices();
+  stopProgress();
+  toast('Device disconnected');
+}
+
+async function disconnectDevice() {
+  if (state.server && state.server.connected) {
+    state.server.disconnect();
+  } else {
+    onDisconnected();
+  }
+}
+
+function showControls(device) {
+  const icon = guessIcon(device.name || '');
+  document.getElementById('panel-icon').textContent = icon;
+  document.getElementById('panel-name').textContent = device.name || 'Bluetooth Device';
+  document.getElementById('panel-rssi').textContent = 'Connected via BLE';
+
+  // Battery
+  if (state.battery !== null) {
+    const pct = state.battery;
+    document.getElementById('battery-fill').style.width = pct + '%';
+    document.getElementById('battery-fill').className = 'battery-fill' + (pct <= 20 ? ' low' : pct <= 40 ? ' mid' : '');
+    document.getElementById('battery-pct').textContent = pct + '%';
+  } else {
+    document.getElementById('battery-fill').style.width = '0%';
+    document.getElementById('battery-pct').textContent = 'N/A';
+  }
+
+  document.getElementById('controls-panel').classList.remove('hidden');
+  loadTrack(trackIdx);
+}
+
+// ── AVRCP / Media controls (best-effort via Web Bluetooth) ─────────────────
+// Real AVRCP commands over GATT aren't universally supported in browsers.
+// We send Media Session API commands when available, and simulate the rest.
+
+function sendMediaCommand(cmd) {
+  if ('mediaSession' in navigator) {
+    try {
+      switch(cmd) {
+        case 'play': navigator.mediaSession.playbackState = 'playing'; break;
+        case 'pause': navigator.mediaSession.playbackState = 'paused'; break;
+      }
+    } catch(e) {}
+  }
+}
+
+// ── Playback UI ────────────────────────────────────────────────────────────
+function loadTrack(idx) {
+  const t = tracks[idx];
+  document.getElementById('np-art').textContent = t.art;
+  document.getElementById('np-title').textContent = t.title;
+  document.getElementById('np-sub').textContent = t.artist;
+  document.getElementById('time-dur').textContent = fmt(t.dur);
+  state.duration = t.dur;
+  state.progress = 0;
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('time-cur').textContent = '0:00';
+}
+
+function startProgress() {
+  stopProgress();
+  state.progressTimer = setInterval(() => {
+    if (!state.playing) return;
+    state.progress = Math.min(state.progress + 1, state.duration);
+    const pct = (state.progress / state.duration) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('time-cur').textContent = fmt(state.progress);
+    if (state.progress >= state.duration) {
+      if (state.repeat) { state.progress = 0; }
+      else { nextTrack(); }
+    }
+  }, 1000);
+}
+
+function stopProgress() {
+  clearInterval(state.progressTimer);
+  state.progressTimer = null;
+}
+
+function nextTrack() {
+  trackIdx = state.shuffle ? Math.floor(Math.random()*tracks.length) : (trackIdx+1)%tracks.length;
+  loadTrack(trackIdx);
+  if (state.playing) startProgress();
+}
+
+function prevTrack() {
+  if (state.progress > 5) { state.progress = 0; document.getElementById('time-cur').textContent='0:00'; return; }
+  trackIdx = (trackIdx - 1 + tracks.length) % tracks.length;
+  loadTrack(trackIdx);
+  if (state.playing) startProgress();
+}
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  state.playing = !state.playing;
+  document.getElementById('btn-play').innerHTML = state.playing ? '⏸' : '▶';
+  if (state.playing) { sendMediaCommand('play'); startProgress(); toast('Playing'); }
+  else { sendMediaCommand('pause'); stopProgress(); toast('Paused'); }
+});
+
+document.getElementById('btn-next').addEventListener('click', () => { nextTrack(); toast('Next track'); });
+document.getElementById('btn-prev').addEventListener('click', () => { prevTrack(); toast('Previous'); });
+
+document.getElementById('btn-shuffle').addEventListener('click', () => {
+  state.shuffle = !state.shuffle;
+  document.getElementById('btn-shuffle').classList.toggle('active', state.shuffle);
+  toast('Shuffle ' + (state.shuffle ? 'on' : 'off'));
+});
+
+document.getElementById('btn-repeat').addEventListener('click', () => {
+  state.repeat = !state.repeat;
+  document.getElementById('btn-repeat').classList.toggle('active', state.repeat);
+  toast('Repeat ' + (state.repeat ? 'on' : 'off'));
+});
+
+document.getElementById('heart-btn').addEventListener('click', () => {
+  state.liked = !state.liked;
+  document.getElementById('heart-btn').textContent = state.liked ? '♥' : '♡';
+  document.getElementById('heart-btn').classList.toggle('liked', state.liked);
+  toast(state.liked ? 'Added to liked' : 'Removed from liked');
+});
+
+// Progress click
+document.getElementById('progress-track').addEventListener('click', (e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  state.progress = Math.round(pct * state.duration);
+  document.getElementById('progress-fill').style.width = (pct*100) + '%';
+  document.getElementById('time-cur').textContent = fmt(state.progress);
+});
+
+// Volume
+const volSlider = document.getElementById('vol-slider');
+volSlider.addEventListener('input', () => {
+  state.volume = parseInt(volSlider.value);
+  updateVolUI();
+});
+
+function updateVolUI() {
+  document.getElementById('vol-fill').style.width = state.volume + '%';
+  document.getElementById('vol-pct').textContent = state.volume + '%';
+  volSlider.value = state.volume;
+  document.getElementById('mute-btn').textContent = state.volume === 0 ? '🔇' : state.volume < 40 ? '🔉' : '🔊';
+}
+
+document.getElementById('mute-btn').addEventListener('click', () => {
+  if (!state.muted) { state.prevVol = state.volume; state.volume = 0; state.muted = true; }
+  else { state.volume = state.prevVol; state.muted = false; }
+  updateVolUI();
+  toast(state.muted ? 'Muted' : 'Unmuted');
+});
+
+// ── Equalizer ──────────────────────────────────────────────────────────────
+function renderEQ() {
+  const grid = document.getElementById('eq-grid');
+  grid.innerHTML = '';
+  eqBands.forEach((label, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'eq-band-wrap';
+    wrap.innerHTML = `
+      <span class="eq-val" id="eq-val-${i}">${state.eq[i]-50>0?'+':''}${state.eq[i]-50}</span>
+      <div class="eq-slider-wrap">
+        <input type="range" class="eq-slider" min="0" max="100" value="${state.eq[i]}" step="1" id="eq-${i}">
+      </div>
+      <span class="eq-label">${label}</span>
+    `;
+    wrap.querySelector('input').addEventListener('input', e => {
+      state.eq[i] = parseInt(e.target.value);
+      const v = state.eq[i]-50;
+      document.getElementById(`eq-val-${i}`).textContent = (v>0?'+':'')+v;
+    });
+    grid.appendChild(wrap);
+  });
+}
+
+function renderEQPresets() {
+  const el = document.getElementById('eq-presets');
+  el.innerHTML = '';
+  for (const [name, vals] of Object.entries(eqPresets)) {
+    const btn = document.createElement('button');
+    btn.className = 'eq-preset';
+    btn.textContent = name;
+    btn.addEventListener('click', () => {
+      state.eq = [...vals];
+      renderEQ();
+      document.querySelectorAll('.eq-preset').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      toast(name + ' preset');
+    });
+    el.appendChild(btn);
+  }
+}
+
+// ── Modes ──────────────────────────────────────────────────────────────────
+function renderModes() {
+  const chips = document.getElementById('mode-chips');
+  chips.innerHTML = '';
+  modes.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mode-chip' + (state.mode === m ? ' active' : '');
+    btn.textContent = m;
+    btn.addEventListener('click', () => {
+      state.mode = m;
+      document.querySelectorAll('#mode-chips .mode-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      toast(m + ' mode');
+    });
+    chips.appendChild(btn);
+  });
+
+  const sc = document.getElementById('surround-chips');
+  sc.innerHTML = '';
+  surrounds.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'mode-chip' + (state.surround === s ? ' active' : '');
+    btn.textContent = s;
+    btn.addEventListener('click', () => {
+      state.surround = s;
+      document.querySelectorAll('#surround-chips .mode-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      toast('Surround: ' + s);
+    });
+    sc.appendChild(btn);
+  });
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function renderSettings() {
+  const list = document.getElementById('settings-list');
+  const items = [
+    { key: 'autoConnect', label: 'Auto-connect', sub: 'Reconnect when in range', type: 'toggle' },
+    { key: 'lowLatency', label: 'Low Latency Mode', sub: 'Reduces audio delay for video', type: 'toggle' },
+    { key: 'loudnessEq', label: 'Loudness Equalizer', sub: 'Enhances quiet audio', type: 'toggle' },
+    { key: 'powerOff', label: 'Auto Power Off', sub: 'Turn off after inactivity', type: 'select', opts: ['10 min','30 min','1 hour','Never'] },
+  ];
+  list.innerHTML = '';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'setting-row';
+    if (item.type === 'toggle') {
+      row.innerHTML = `
+        <div><div class="setting-label">${item.label}</div><div class="setting-sub">${item.sub}</div></div>
+        <div class="toggle ${state.settings[item.key] ? 'on' : ''}" id="toggle-${item.key}"></div>
+      `;
+      row.querySelector('.toggle').addEventListener('click', () => {
+        state.settings[item.key] = !state.settings[item.key];
+        row.querySelector('.toggle').classList.toggle('on', state.settings[item.key]);
+        toast(item.label + ': ' + (state.settings[item.key] ? 'On' : 'Off'));
+      });
+    } else if (item.type === 'select') {
+      row.innerHTML = `
+        <div><div class="setting-label">${item.label}</div><div class="setting-sub">${item.sub}</div></div>
+        <select class="setting-select" id="sel-${item.key}">
+          ${item.opts.map(o => `<option ${state.settings[item.key]===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      `;
+      row.querySelector('select').addEventListener('change', e => {
+        state.settings[item.key] = e.target.value;
+        toast(item.label + ': ' + e.target.value);
+      });
+    }
+    list.appendChild(row);
+  });
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('main-disconnect').addEventListener('click', () => disconnectDevice());
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderEQ();
+renderEQPresets();
+renderModes();
+renderSettings();
+</script>
+</body>
+</html>
