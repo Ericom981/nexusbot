@@ -504,8 +504,8 @@ app.post('/api/admin/restart', requireAdmin, async (req, res) => {
 // Send message as bot (admin only)
 app.post('/api/admin/send', requireAdmin, async (req, res) => {
   const { number, text } = req.body
-  if (!sock || botStatus !== 'connected') return res.status(503).json({ error: 'Bot not connected' })
-  await sock.sendMessage(`${number}@s.whatsapp.net`, { text })
+  if (!sock) return res.status(503).json({ error: 'Bot not connected' })
+  await sock.sendMessage(`${number}@s.whatsapp.net`, { text }).catch(e => console.error('Send error:', e))
   res.json({ success: true })
 })
 
