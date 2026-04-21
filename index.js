@@ -429,6 +429,29 @@ app.post('/api/admin/generate-code', requireAdmin, (req, res) => {
   log('system', null, `Admin generated pairing code: ${code}`)
   res.json({ code, expires, shareUrl: `https://wa.me/${CONFIG.adminNumber}?text=${code}` })
 })
+// PUBLIC: User requests code by submitting their number
+app.post('/api/request-code', async (req, res) => {
+  const { number } = req.body
+  if (!number) return res.status(400).json({ error: 'Number required' })
+  const clean = number.replace(/\D/g, '')
+  if (clean.length < 10) return res.status(400).json({ error: 'Invalid number' })
+  const code = generatePairingCode()
+  const expires = Date.now() + 24 * 60 * 60 * 1000
+  pairingCodes.set(code, { expires, createdAt: new Date().toISOString(), number: clean })
+  log('system', null, `Auto code generated for +${clean}`)
+  if (sock && botStatus === 'connected') {
+    try {
+      await sock.sendMessage(`${clean}@s.whatsapp.net`, {
+        text: `👋 *Welcome to ${CONFIG.botName}!*\n\nYour pairing code is:\n\n*${code}*\n\nSend this code back to me to connect.\n\n_Code expires in 24 hours_`
+      })
+      res.json({ success: true, message: 'Code sent!' })
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to send. Check your number.' })
+    }
+  } else {
+    res.status(503).json({ error: 'Bot offline. Try again later.' })
+  }
+})
 
 // Get all pairing codes
 app.get('/api/admin/codes', requireAdmin, (req, res) => {
