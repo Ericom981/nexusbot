@@ -2,546 +2,275 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NexusBot — Connect Your WhatsApp</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet"/>
-<script src="/socket.io/socket.io.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NexusBot — Connect</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --neon: #00ffe7;
-    --neon2: #ff2d78;
-    --bg: #040d12;
-    --surface: #0a1a22;
-    --border: rgba(0,255,231,0.18);
-    --text: #b8e8e4;
-    --text2: #557a75;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-  }
+:root{--g:#00ff88;--g2:#00ccff;--r:#ff2d78;--bg:#030a05;--s:#071209;--s2:#0a1a0d;--b:rgba(0,255,136,0.15);--t:#a0d4b0;--t2:#3a6b47}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.1;pointer-events:none;z-index:0}
+.o1{width:600px;height:600px;background:var(--g);top:-200px;left:-100px;animation:drift 9s ease-in-out infinite alternate}
+.o2{width:500px;height:500px;background:var(--g2);bottom:-200px;right:-100px;animation:drift 11s ease-in-out infinite alternate-reverse}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(30px,40px)}}
+.wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 20px 80px}
 
-  /* ── Animated grid background ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,255,231,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,255,231,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* HEADER */
+header{text-align:center;padding:56px 0 36px}
+.logo{width:90px;height:90px;border-radius:50%;border:2px solid var(--g);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 0 40px rgba(0,255,136,.3);animation:glow 2.5s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 30px rgba(0,255,136,.3)}50%{box-shadow:0 0 70px rgba(0,255,136,.6)}}
+.logo svg{width:46px;height:46px;fill:var(--g)}
+h1{font-family:'Orbitron',monospace;font-size:clamp(2rem,7vw,4rem);font-weight:900;background:linear-gradient(135deg,var(--g),#fff,var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:4px;margin-bottom:10px}
+.tag{font-family:'Share Tech Mono',monospace;font-size:1rem;color:var(--t2);letter-spacing:3px;text-transform:uppercase}
+.sbar{display:flex;align-items:center;justify-content:center;gap:10px;margin:20px 0;font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--t2)}
+.dot{width:9px;height:9px;border-radius:50%;background:#555}
+.dot.on{background:var(--g);box-shadow:0 0 10px var(--g);animation:bl 1.5s infinite}
+.dot.off{background:var(--r)}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* ── Glow orbs ── */
-  .orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.12;
-    pointer-events: none;
-    z-index: 0;
-  }
-  .orb1 { width: 500px; height: 500px; background: var(--neon); top: -100px; left: -100px; animation: drift 8s ease-in-out infinite alternate; }
-  .orb2 { width: 400px; height: 400px; background: var(--neon2); bottom: -100px; right: -100px; animation: drift 10s ease-in-out infinite alternate-reverse; }
-  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(40px, 30px); } }
+/* SECTION TITLE */
+.stitle{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:4px;color:var(--g);text-transform:uppercase;margin-bottom:22px;display:flex;align-items:center;gap:12px}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--g),transparent);opacity:.3}
 
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 24px 60px;
-  }
+/* STEPS */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:40px}
+.sc{background:var(--s);border:1px solid var(--b);border-radius:14px;padding:24px;position:relative;transition:all .3s}
+.sc:hover{border-color:var(--g);transform:translateY(-3px)}
+.sn{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:rgba(0,255,136,.07);position:absolute;top:12px;right:16px}
+.si{font-size:1.8rem;margin-bottom:12px;display:block}
+.sc h3{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:2px;color:var(--g);margin-bottom:8px}
+.sc p{font-size:.9rem;color:var(--t2);line-height:1.6}
 
-  /* ── HEADER ── */
-  header {
-    text-align: center;
-    padding: 60px 0 40px;
-  }
-  .logo-ring {
-    width: 100px; height: 100px;
-    border-radius: 50%;
-    border: 2px solid var(--neon);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 24px;
-    position: relative;
-    box-shadow: 0 0 30px rgba(0,255,231,0.3), inset 0 0 30px rgba(0,255,231,0.05);
-    animation: pulse-ring 2s ease-in-out infinite;
-  }
-  @keyframes pulse-ring {
-    0%, 100% { box-shadow: 0 0 30px rgba(0,255,231,0.3), inset 0 0 30px rgba(0,255,231,0.05); }
-    50% { box-shadow: 0 0 60px rgba(0,255,231,0.5), inset 0 0 30px rgba(0,255,231,0.1); }
-  }
-  .logo-ring svg { width: 50px; height: 50px; fill: var(--neon); }
-  h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    font-weight: 900;
-    background: linear-gradient(135deg, var(--neon), #fff, var(--neon2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 4px;
-    margin-bottom: 12px;
-  }
-  .tagline {
-    font-size: 1.1rem;
-    color: var(--text2);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-family: 'Share Tech Mono', monospace;
-  }
+/* CONNECT CARD */
+.ccard{background:var(--s);border:1px solid var(--b);border-radius:18px;padding:44px;margin:36px 0;text-align:center;position:relative;overflow:hidden}
+.ccard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--g),var(--g2),var(--g),transparent)}
+.ccard h2{font-family:'Orbitron',monospace;font-size:1.05rem;letter-spacing:3px;color:var(--g);margin-bottom:8px}
+.csub{font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--t2);margin-bottom:28px}
+.panel{display:none}.panel.active{display:block}
 
-  /* ── STATUS BADGE ── */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 24px 0;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text2);
-  }
-  .status-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #888;
-    transition: all 0.4s;
-  }
-  .status-dot.online { background: var(--neon); box-shadow: 0 0 10px var(--neon); animation: blink 1.5s infinite; }
-  .status-dot.offline { background: var(--neon2); box-shadow: 0 0 10px var(--neon2); }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* PHONE INPUT */
+.piw{display:flex;background:rgba(0,0,0,.5);border:1px solid var(--b);border-radius:12px;overflow:hidden;max-width:480px;margin:0 auto 16px;transition:border-color .3s}
+.piw:focus-within{border-color:var(--g)}
+.csel{background:transparent;border:none;border-right:1px solid var(--b);padding:0 12px;font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--g);outline:none;cursor:pointer;min-width:100px}
+.ni{flex:1;background:transparent;border:none;outline:none;padding:16px;font-family:'Share Tech Mono',monospace;font-size:1.1rem;color:var(--g);caret-color:var(--g)}
+.ni::placeholder{color:var(--t2);font-size:.85rem}
+.bsend{background:linear-gradient(135deg,var(--g),#00cc70);color:#030a05;border:none;padding:16px 22px;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .3s;white-space:nowrap}
+.bsend:hover{filter:brightness(1.15)}
+.bsend:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--t2);letter-spacing:1px;margin-top:8px}
 
-  /* ── STEPS ── */
-  .steps-section { margin: 40px 0; }
-  .section-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 4px;
-    color: var(--neon);
-    text-transform: uppercase;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--neon), transparent);
-    opacity: 0.3;
-  }
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-  }
-  .step-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s, transform 0.3s;
-  }
-  .step-card:hover { border-color: var(--neon); transform: translateY(-3px); }
-  .step-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--neon), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .step-card:hover::before { opacity: 1; }
-  .step-num {
-    font-family: 'Orbitron', monospace;
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: rgba(0,255,231,0.1);
-    position: absolute;
-    top: 16px; right: 20px;
-  }
-  .step-icon {
-    font-size: 2rem;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .step-card h3 {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
-    letter-spacing: 2px;
-    color: var(--neon);
-    margin-bottom: 10px;
-  }
-  .step-card p {
-    font-size: 0.95rem;
-    color: var(--text2);
-    line-height: 1.6;
-  }
+/* WAITING */
+.wbox{padding:24px 0;text-align:center}
+.spin{width:64px;height:64px;border-radius:50%;border:3px solid rgba(0,255,136,.1);border-top-color:var(--g);animation:spin 1s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wbox h3{font-family:'Orbitron',monospace;font-size:.9rem;letter-spacing:3px;color:var(--g);margin-bottom:10px}
+.wbox p{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--t2);line-height:1.8}
+.pdisp{color:var(--g);font-size:1.1rem;font-family:'Share Tech Mono',monospace;margin:10px 0}
 
-  /* ── CONNECT CARD ── */
-  .connect-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
-    margin: 40px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .connect-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, rgba(0,255,231,0.05), transparent 70%);
-    pointer-events: none;
-  }
-  .connect-card h2 {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.1rem;
-    letter-spacing: 3px;
-    color: var(--neon);
-    margin-bottom: 8px;
-  }
-  .connect-card .subtitle {
-    font-size: 0.9rem;
-    color: var(--text2);
-    margin-bottom: 32px;
-    font-family: 'Share Tech Mono', monospace;
-  }
+/* CODE INPUT */
+.ciw{display:flex;background:rgba(0,0,0,.5);border:1px solid var(--b);border-radius:12px;overflow:hidden;max-width:440px;margin:0 auto 16px;transition:border-color .3s}
+.ciw:focus-within{border-color:var(--g)}
+.ci{flex:1;background:transparent;border:none;outline:none;padding:16px 20px;font-family:'Share Tech Mono',monospace;font-size:1.5rem;letter-spacing:10px;color:var(--g);text-transform:uppercase;text-align:center;caret-color:var(--g)}
+.ci::placeholder{color:var(--t2);letter-spacing:2px;font-size:.85rem}
+.bconn{background:linear-gradient(135deg,var(--g),#00cc70);color:#030a05;border:none;padding:16px 22px;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .3s}
+.bconn:hover{filter:brightness(1.15)}
 
-  /* Code input */
-  .code-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-  .code-input-wrapper {
-    display: flex;
-    gap: 0;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    width: 100%;
-    max-width: 420px;
-  }
-  .code-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 16px 20px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.3rem;
-    letter-spacing: 6px;
-    color: var(--neon);
-    text-transform: uppercase;
-    text-align: center;
-    caret-color: var(--neon);
-  }
-  .code-input::placeholder { color: var(--text2); letter-spacing: 2px; font-size: 0.9rem; }
-  .btn-connect {
-    background: linear-gradient(135deg, var(--neon), #00c4b0);
-    color: #040d12;
-    border: none;
-    padding: 16px 32px;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.3s;
-    min-width: 130px;
-  }
-  .btn-connect:hover { background: linear-gradient(135deg, #00c4b0, var(--neon)); filter: brightness(1.2); }
-  .btn-connect:active { transform: scale(0.97); }
+/* BUTTONS */
+.bwa{display:inline-flex;align-items:center;gap:10px;background:#128C7E;color:#fff;padding:14px 24px;border-radius:10px;text-decoration:none;font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:2px;transition:all .3s;font-weight:700;margin-top:16px}
+.bwa:hover{background:#075E54;transform:translateY(-2px);box-shadow:0 8px 24px rgba(18,140,126,.4)}
+.bnext{background:linear-gradient(135deg,var(--g),#00cc70);color:#030a05;border:none;padding:13px 30px;border-radius:9px;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .3s;margin-top:16px}
+.bnext:hover{filter:brightness(1.15)}
+.bback{background:transparent;border:1px solid var(--b);color:var(--t2);padding:10px 20px;border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:.72rem;cursor:pointer;margin-top:14px;transition:all .3s;letter-spacing:1px;display:inline-block}
+.bback:hover{border-color:var(--g);color:var(--g)}
 
-  /* WhatsApp link */
-  .wa-link-section {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-  }
-  .wa-link-section p { font-size: 0.85rem; color: var(--text2); margin-bottom: 14px; font-family: 'Share Tech Mono', monospace; }
-  .btn-wa {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: #128C7E;
-    color: #fff;
-    padding: 14px 28px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-    transition: all 0.3s;
-    font-weight: 700;
-  }
-  .btn-wa:hover { background: #075E54; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(18,140,126,0.4); }
+/* SUCCESS */
+.sbox{padding:20px 0;text-align:center}
+.sico{font-size:4.5rem;margin-bottom:16px;display:block;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sbox h3{font-family:'Orbitron',monospace;font-size:1.1rem;letter-spacing:3px;color:var(--g);margin-bottom:12px}
+.sbox p{font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--t2);line-height:1.9}
+.cmdbox{background:rgba(0,0,0,.4);border:1px solid var(--b);border-radius:8px;padding:14px 20px;margin:16px auto;max-width:180px;font-family:'Share Tech Mono',monospace;font-size:1.3rem;color:var(--g);letter-spacing:5px}
 
-  /* ── FEATURES ── */
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin: 24px 0;
-  }
-  .feature-pill {
-    background: rgba(0,255,231,0.04);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 16px;
-    text-align: center;
-    transition: all 0.3s;
-  }
-  .feature-pill:hover { border-color: rgba(0,255,231,0.4); background: rgba(0,255,231,0.08); }
-  .feature-pill .icon { font-size: 1.8rem; margin-bottom: 10px; }
-  .feature-pill .name { font-family: 'Orbitron', monospace; font-size: 0.7rem; letter-spacing: 2px; color: var(--neon); margin-bottom: 4px; }
-  .feature-pill .desc { font-size: 0.8rem; color: var(--text2); }
+/* FEATURES */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:24px 0}
+.fp{background:rgba(0,255,136,.03);border:1px solid var(--b);border-radius:12px;padding:18px 14px;text-align:center;transition:all .3s;cursor:default}
+.fp:hover{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.07);transform:translateY(-2px)}
+.fp .ic{font-size:1.7rem;margin-bottom:10px}
+.fp .nm{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:2px;color:var(--g);margin-bottom:4px}
+.fp .ds{font-size:.78rem;color:var(--t2)}
 
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--surface);
-    border: 1px solid var(--neon);
-    border-radius: 10px;
-    padding: 14px 24px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.9rem;
-    color: var(--neon);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1000;
-    box-shadow: 0 0 30px rgba(0,255,231,0.2);
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.error { border-color: var(--neon2); color: var(--neon2); box-shadow: 0 0 30px rgba(255,45,120,0.2); }
+/* COMMANDS PREVIEW */
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0}
+.cmd-cat{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:18px}
+.cmd-cat h4{font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;color:var(--g);margin-bottom:12px}
+.cmd-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,255,136,.05);font-family:'Share Tech Mono',monospace;font-size:.76rem;color:var(--t2)}
+.cmd-item:last-child{border-bottom:none}
+.cmd-item .cc{color:var(--g);min-width:80px}
 
-  /* ── ADMIN LINK ── */
-  .admin-link {
-    position: fixed;
-    top: 20px; right: 20px;
-    background: rgba(10,26,34,0.8);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text2);
-    text-decoration: none;
-    letter-spacing: 1px;
-    transition: all 0.3s;
-    backdrop-filter: blur(10px);
-    z-index: 10;
-  }
-  .admin-link:hover { color: var(--neon); border-color: var(--neon); }
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--s2);border:1px solid var(--g);border-radius:12px;padding:14px 24px;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--g);transition:transform .4s cubic-bezier(.175,.885,.32,1.275);z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:340px;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:var(--r);color:var(--r)}
 
-  /* ── FOOTER ── */
-  footer {
-    text-align: center;
-    padding: 40px 0 20px;
-    border-top: 1px solid var(--border);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text2);
-    letter-spacing: 2px;
-  }
+footer{text-align:center;padding:36px 0 16px;border-top:1px solid var(--b);font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--t2);letter-spacing:2px}
 
-  @media (max-width: 600px) {
-    .connect-card { padding: 28px 20px; }
-    .code-input-wrapper { flex-direction: column; }
-    .btn-connect { border-radius: 0 0 8px 8px; }
-  }
+@media(max-width:600px){
+  .ccard{padding:24px 16px}
+  .piw,.ciw{flex-direction:column}
+  .bsend,.bconn{border-radius:0 0 10px 10px}
+  .csel{border-right:none;border-bottom:1px solid var(--b);padding:10px 12px}
+}
 </style>
 </head>
 <body>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="wrap">
 
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-
-<a href="/admin.html" class="admin-link">⚙ ADMIN</a>
-
-<div class="container">
   <header>
-    <div class="logo-ring">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-      </svg>
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
     </div>
     <h1 id="botName">NEXUSBOT</h1>
-    <p class="tagline">Your Smart WhatsApp Automation Hub</p>
-    <div class="status-bar">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText" style="font-family:'Share Tech Mono',monospace;">CHECKING...</span>
+    <p class="tag">Powerful WhatsApp Automation</p>
+    <div class="sbar">
+      <div class="dot" id="sdot"></div>
+      <span id="stxt" style="font-family:'Share Tech Mono',monospace">CONNECTING...</span>
     </div>
   </header>
 
-  <!-- HOW IT WORKS -->
-  <div class="steps-section">
-    <div class="section-title">How to Connect</div>
-    <div class="steps-grid">
-      <div class="step-card">
-        <span class="step-num">01</span>
-        <span class="step-icon">🔑</span>
-        <h3>Get Your Code</h3>
-        <p>Receive a unique 8-character pairing code from the bot admin or via the WhatsApp link below.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-num">02</span>
-        <span class="step-icon">📲</span>
-        <h3>Send the Code</h3>
-        <p>Open WhatsApp and send your pairing code to the bot number. It will activate your account automatically.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-num">03</span>
-        <span class="step-icon">🚀</span>
-        <h3>Start Using</h3>
-        <p>You're connected! Type <strong>.menu</strong> in the chat to see all available features and commands.</p>
-      </div>
-    </div>
+  <div class="stitle">How It Works</div>
+  <div class="sgrid">
+    <div class="sc"><span class="sn">01</span><span class="si">📱</span><h3>Enter Number</h3><p>Type your WhatsApp number with country code. No account needed.</p></div>
+    <div class="sc"><span class="sn">02</span><span class="si">💬</span><h3>Receive Code</h3><p>The bot instantly sends a pairing code directly to your WhatsApp.</p></div>
+    <div class="sc"><span class="sn">03</span><span class="si">✅</span><h3>Send Code Back</h3><p>Reply with the code and you're connected instantly!</p></div>
+    <div class="sc"><span class="sn">04</span><span class="si">🚀</span><h3>Start Using</h3><p>Type <strong>.menu</strong> to explore all features and commands.</p></div>
   </div>
 
   <!-- CONNECT CARD -->
-  <div class="connect-card">
-    <h2>ENTER PAIRING CODE</h2>
-    <p class="subtitle">// paste your 8-character code below</p>
-    <div class="code-form">
-      <div class="code-input-wrapper">
-        <input class="code-input" id="codeInput" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false"/>
-        <button class="btn-connect" id="connectBtn" onclick="verifyCode()">CONNECT</button>
+  <div class="ccard">
+
+    <!-- P1: Phone number -->
+    <div class="panel active" id="p1">
+      <h2>GET CONNECTED</h2>
+      <p class="csub">// enter your WhatsApp number to receive your pairing code</p>
+      <div class="piw">
+        <select class="csel" id="cc">
+          <option value="254">🇰🇪 +254</option>
+          <option value="1">🇺🇸 +1</option>
+          <option value="44">🇬🇧 +44</option>
+          <option value="234">🇳🇬 +234</option>
+          <option value="27">🇿🇦 +27</option>
+          <option value="255">🇹🇿 +255</option>
+          <option value="256">🇺🇬 +256</option>
+          <option value="91">🇮🇳 +91</option>
+          <option value="233">🇬🇭 +233</option>
+          <option value="251">🇪🇹 +251</option>
+          <option value="260">🇿🇲 +260</option>
+          <option value="263">🇿🇼 +263</option>
+          <option value="212">🇲🇦 +212</option>
+          <option value="20">🇪🇬 +20</option>
+          <option value="225">🇨🇮 +225</option>
+          <option value="221">🇸🇳 +221</option>
+        </select>
+        <input class="ni" id="ph" type="tel" placeholder="712345678" maxlength="12"/>
+        <button class="bsend" id="sbtn" onclick="requestCode()">SEND CODE</button>
+      </div>
+      <p class="hint">// the bot will WhatsApp you a unique pairing code instantly</p>
+    </div>
+
+    <!-- P2: Code sent, waiting -->
+    <div class="panel" id="p2">
+      <div class="wbox">
+        <div class="spin"></div>
+        <h3>CODE SENT! ✅</h3>
+        <p>Pairing code sent to:</p>
+        <div class="pdisp" id="sentNum"></div>
+        <p>Open WhatsApp → Check messages<br/>Then enter the code you received.</p>
+        <br/>
+        <button class="bnext" onclick="sp(3)">I GOT THE CODE →</button>
+        <br/>
+        <button class="bback" onclick="sp(1)">← Try Different Number</button>
       </div>
     </div>
-    <div class="wa-link-section">
-      <p>// OR open WhatsApp directly and send your code to the bot</p>
-      <a id="waLink" href="#" class="btn-wa" target="_blank">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        OPEN WHATSAPP
+
+    <!-- P3: Enter code -->
+    <div class="panel" id="p3">
+      <h2>ENTER YOUR CODE</h2>
+      <p class="csub">// type the 8-character code from your WhatsApp</p>
+      <div class="ciw">
+        <input class="ci" id="ci" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false"/>
+        <button class="bconn" onclick="submitCode()">CONNECT</button>
+      </div>
+      <br/>
+      <a id="wal" href="#" class="bwa" target="_blank">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        OPEN WHATSAPP & SEND CODE
       </a>
+      <br/>
+      <button class="bback" onclick="sp(2)">← Back</button>
     </div>
+
+    <!-- P4: Success -->
+    <div class="panel" id="p4">
+      <div class="sbox">
+        <span class="sico">🎉</span>
+        <h3>YOU'RE CONNECTED!</h3>
+        <p>Welcome to <strong id="sbn">NexusBot</strong>!<br/>Go to WhatsApp and type:</p>
+        <div class="cmdbox">.menu</div>
+        <p>to explore all features and commands.<br/>Enjoy your bot! 🚀</p>
+      </div>
+    </div>
+
   </div>
 
   <!-- FEATURES -->
-  <div class="section-title">Bot Features</div>
-  <div class="features-grid">
-    <div class="feature-pill">
-      <div class="icon">📸</div>
-      <div class="name">INSTAGRAM</div>
-      <div class="desc">Download reels, posts & stories</div>
+  <div class="stitle">Bot Features</div>
+  <div class="fgrid">
+    <div class="fp"><div class="ic">📸</div><div class="nm">INSTAGRAM</div><div class="ds">Reels, posts & stories</div></div>
+    <div class="fp"><div class="ic">▶️</div><div class="nm">TIKTOK</div><div class="ds">No watermark downloads</div></div>
+    <div class="fp"><div class="ic">🐦</div><div class="nm">TWITTER/X</div><div class="ds">Videos & GIFs</div></div>
+    <div class="fp"><div class="ic">📘</div><div class="nm">FACEBOOK</div><div class="ds">Facebook videos</div></div>
+    <div class="fp"><div class="ic">🤖</div><div class="nm">AI CHAT</div><div class="ds">GPT-4 powered</div></div>
+    <div class="fp"><div class="ic">👁️</div><div class="nm">AUTO STATUS</div><div class="ds">View & react auto</div></div>
+    <div class="fp"><div class="ic">🌤️</div><div class="nm">WEATHER</div><div class="ds">Any city forecast</div></div>
+    <div class="fp"><div class="ic">📰</div><div class="nm">NEWS</div><div class="ds">Latest headlines</div></div>
+    <div class="fp"><div class="ic">🌐</div><div class="nm">TRANSLATE</div><div class="ds">100+ languages</div></div>
+    <div class="fp"><div class="ic">👥</div><div class="nm">GROUP TOOLS</div><div class="ds">Tag all, group info</div></div>
+    <div class="fp"><div class="ic">😂</div><div class="nm">FUN COMMANDS</div><div class="ds">Jokes, facts, quotes</div></div>
+    <div class="fp"><div class="ic">🔗</div><div class="nm">URL SHORTENER</div><div class="ds">Shorten any link</div></div>
+  </div>
+
+  <!-- COMMANDS PREVIEW -->
+  <div class="stitle">Commands Preview</div>
+  <div class="cmds">
+    <div class="cmd-cat">
+      <h4>📥 DOWNLOADERS</h4>
+      <div class="cmd-item"><span class="cc">.ig</span><span>Instagram video</span></div>
+      <div class="cmd-item"><span class="cc">.tt</span><span>TikTok video</span></div>
+      <div class="cmd-item"><span class="cc">.fb</span><span>Facebook video</span></div>
+      <div class="cmd-item"><span class="cc">.tw</span><span>Twitter video</span></div>
+      <div class="cmd-item"><span class="cc">.yt</span><span>YouTube video</span></div>
     </div>
-    <div class="feature-pill">
-      <div class="icon">🐦</div>
-      <div class="name">TWITTER/X</div>
-      <div class="desc">Save videos & GIFs</div>
+    <div class="cmd-cat">
+      <h4>🛠️ TOOLS</h4>
+      <div class="cmd-item"><span class="cc">.ai</span><span>Ask AI anything</span></div>
+      <div class="cmd-item"><span class="cc">.weather</span><span>Live weather</span></div>
+      <div class="cmd-item"><span class="cc">.news</span><span>Top headlines</span></div>
+      <div class="cmd-item"><span class="cc">.translate</span><span>Translate text</span></div>
+      <div class="cmd-item"><span class="cc">.shorturl</span><span>Shorten URL</span></div>
     </div>
-    <div class="feature-pill">
-      <div class="icon">📘</div>
-      <div class="name">FACEBOOK</div>
-      <div class="desc">Download FB videos</div>
-    </div>
-    <div class="feature-pill">
-      <div class="icon">▶️</div>
-      <div class="name">TIKTOK</div>
-      <div class="desc">No-watermark downloads</div>
-    </div>
-    <div class="feature-pill">
-      <div class="icon">👁️</div>
-      <div class="name">AUTO STATUS</div>
-      <div class="desc">View & react to statuses</div>
-    </div>
-    <div class="feature-pill">
-      <div class="icon">🤖</div>
-      <div class="name">AI CHAT</div>
-      <div class="desc">GPT-powered answers</div>
-    </div>
-    <div class="feature-pill">
-      <div class="icon">🌤️</div>
-      <div class="name">WEATHER</div>
-      <div class="desc">Live weather updates</div>
-    </div>
-    <div class="feature-pill">
-      <div class="icon">📰</div>
-      <div class="name">NEWS</div>
-      <div class="desc">Latest headlines</div>
+    <div class="cmd-cat">
+      <h4>🎮 FUN & MORE</h4>
+      <div class="cmd-item"><span class="cc">.joke</span><span>Random joke</span></div>
+      <div class="cmd-item"><span class="cc">.quote</span><span>Inspiration</span></div>
+      <div class="cmd-item"><span class="cc">.fact</span><span>Random fact</span></div>
+      <div class="cmd-item"><span class="cc">.flip</span><span>Flip a coin</span></div>
+      <div class="cmd-item"><span class="cc">.tagall</span><span>Tag everyone</span></div>
     </div>
   </div>
 
-  <footer>
-    &copy; 2024 NEXUSBOT · ALL RIGHTS RESERVED · POWERED BY BAILEYS
-  </footer>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const socket = io()
-let botNumber = ''
-
-// Load bot info
-fetch('/api/bot-info')
-  .then(r => r.json())
-  .then(data => {
-    document.getElementById('botName').textContent = data.botName?.toUpperCase() || 'NEXUSBOT'
-    document.title = `${data.botName} — Connect Your WhatsApp`
-    const dot = document.getElementById('statusDot')
-    const txt = document.getElementById('statusText')
-    if (data.status === 'online') {
-      dot.className = 'status-dot online'
-      txt.textContent = 'BOT ONLINE — READY TO CONNECT'
-    } else {
-      dot.className = 'status-dot offline'
-      txt.textContent = 'BOT OFFLINE'
-    }
-  })
-
-// Format code input
-document.getElementById('codeInput').addEventListener('input', function() {
-  this.value = this.value.toUpperCase().replace(/[^A-F0-9]/g, '')
-  const code = this.value
-  const waNum = botNumber || ''
-  if (waNum) {
-    document.getElementById('waLink').href = `https://wa.me/${waNum}?text=${code}`
-  }
-})
-
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast')
-  t.textContent = msg
-  t.className = 'toast show' + (isError ? ' error' : '')
-  setTimeout(() => { t.className = 'toast' + (isError ? ' error' : '') }, 3500)
-}
-
-function verifyCode() {
-  const code = document.getElementById('codeInput').value.trim()
-  if (code.length !== 8) return showToast('⚠ Enter your full 8-character code', true)
-  showToast(`✅ Code copied! Open WhatsApp and send "${code}" to the bot.`)
-  if (botNumber) {
-    window.open(`https://wa.me/${botNumber}?text=${code}`, '_blank')
-  }
-}
-
-// Keyboard enter
-document.getElementById('codeInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') verifyCode()
-})
-</script>
-</body>
-</html>
+  <footer>&copy; 2024 NEXUSBOT · FREE · POWERFUL · SECURE</footer>
+</d
