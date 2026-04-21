@@ -1,4 +1,4 @@
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, makeInMemoryStore, getContentType } = require('@whiskeysockets/baileys')
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, getContentType } = require('@whiskeysockets/baileys')
 const { Boom } = require('@hapi/boom')
 const pino = require('pino')
 const express = require('express')
@@ -70,7 +70,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 // ════════════════════════════════════════════════════════════
 //  IN-MEMORY STATE
 // ════════════════════════════════════════════════════════════
-const store = makeInMemoryStore({ logger: pino({ level: 'silent' }) })
+const store = {}
 const activityLog = []
 const connectedUsers = new Map()   // number → { firstSeen, lastSeen, msgCount, chats:[] }
 const pairingCodes = new Map()     // code → { number, expires }
@@ -180,7 +180,7 @@ async function connectBot() {
     syncFullHistory: false,
   })
 
-  store.bind(sock.ev)
+  //store.bind(sock.ev)
 
   // ── Connection ────────────────────────────────────────────
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
