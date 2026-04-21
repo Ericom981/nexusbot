@@ -3,174 +3,144 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NexusBot Admin — Login</title>
+<title>NexusBot — Connect Your WhatsApp</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
   :root {
     --neon: #00ffe7;
     --neon2: #ff2d78;
-    --bg: #030810;
-    --surface: #080f1a;
-    --border: rgba(0,255,231,0.15);
+    --bg: #040d12;
+    --surface: #0a1a22;
+    --border: rgba(0,255,231,0.18);
     --text: #b8e8e4;
-    --text2: #4a7a74;
+    --text2: #557a75;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
+    color: var(--text);
     font-family: 'Rajdhani', sans-serif;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
   }
   body::before {
     content: '';
     position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(0,255,231,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,231,0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
+    background-image: linear-gradient(rgba(0,255,231,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,231,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
   }
-  .orb {
-    position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.08; pointer-events: none;
-  }
-  .orb1 { width: 600px; height: 600px; background: var(--neon); top: -200px; left: -200px; }
-  .orb2 { width: 400px; height: 400px; background: var(--neon2); bottom: -150px; right: -100px; }
-
-  .login-box {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 420px;
-    padding: 48px 40px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    box-shadow: 0 0 60px rgba(0,255,231,0.05), 0 40px 80px rgba(0,0,0,0.6);
-    margin: 20px;
-  }
-  .login-box::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--neon), var(--neon2), transparent);
-    border-radius: 20px 20px 0 0;
-  }
-
-  .logo { text-align: center; margin-bottom: 36px; }
-  .shield {
-    width: 70px; height: 70px;
-    background: rgba(0,255,231,0.06);
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; }
+  .orb1 { width: 500px; height: 500px; background: var(--neon); top: -100px; left: -100px; }
+  .orb2 { width: 400px; height: 400px; background: var(--neon2); bottom: -100px; right: -100px; }
+  .container { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 24px 60px; }
+  header { text-align: center; padding: 60px 0 40px; }
+  .logo-ring {
+    width: 100px; height: 100px; border-radius: 50%;
+    border: 2px solid var(--neon);
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 20px;
-    font-size: 2rem;
+    margin: 0 auto 24px;
+    box-shadow: 0 0 30px rgba(0,255,231,0.3);
+    animation: pulse-ring 2s ease-in-out infinite;
   }
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 30px rgba(0,255,231,0.3); }
+    50% { box-shadow: 0 0 60px rgba(0,255,231,0.5); }
+  }
+  .logo-ring svg { width: 50px; height: 50px; fill: var(--neon); }
   h1 {
     font-family: 'Orbitron', monospace;
-    font-size: 1.4rem;
+    font-size: clamp(2rem, 6vw, 3.5rem);
     font-weight: 900;
+    background: linear-gradient(135deg, var(--neon), #fff, var(--neon2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: 4px;
-    color: var(--neon);
-    margin-bottom: 6px;
+    margin-bottom: 12px;
   }
-  .sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text2);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+  .tagline { font-size: 1.1rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+  .status-bar { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 24px 0; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: var(--text2); }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; transition: all 0.4s; }
+  .status-dot.online { background: var(--neon); box-shadow: 0 0 10px var(--neon); animation: blink 1.5s infinite; }
+  .status-dot.offline { background: var(--neon2); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .section-title {
+    font-family: 'Orbitron', monospace; font-size: 0.75rem; letter-spacing: 4px;
+    color: var(--neon); text-transform: uppercase; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
   }
-
-  .field { margin-bottom: 20px; }
-  label {
-    display: block;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    color: var(--text2);
-    text-transform: uppercase;
-    margin-bottom: 10px;
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--neon), transparent); opacity: 0.3; }
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
+  .step-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 24px; position: relative;
+    transition: border-color 0.3s, transform 0.3s;
   }
-  input[type=password], input[type=text] {
-    width: 100%;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1rem;
-    color: var(--neon);
-    outline: none;
-    letter-spacing: 3px;
-    transition: border-color 0.3s, box-shadow 0.3s;
-    caret-color: var(--neon);
+  .step-card:hover { border-color: var(--neon); transform: translateY(-3px); }
+  .step-num { font-family: 'Orbitron', monospace; font-size: 2.5rem; font-weight: 900; color: rgba(0,255,231,0.1); position: absolute; top: 16px; right: 20px; }
+  .step-icon { font-size: 2rem; margin-bottom: 16px; display: block; }
+  .step-card h3 { font-family: 'Orbitron', monospace; font-size: 0.85rem; letter-spacing: 2px; color: var(--neon); margin-bottom: 10px; }
+  .step-card p { font-size: 0.95rem; color: var(--text2); line-height: 1.6; }
+  .connect-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px; margin: 40px 0; text-align: center;
   }
-  input:focus {
-    border-color: var(--neon);
-    box-shadow: 0 0 20px rgba(0,255,231,0.1);
+  .connect-card h2 { font-family: 'Orbitron', monospace; font-size: 1.1rem; letter-spacing: 3px; color: var(--neon); margin-bottom: 8px; }
+  .subtitle { font-size: 0.9rem; color: var(--text2); margin-bottom: 32px; font-family: 'Share Tech Mono', monospace; }
+  .code-input-wrapper {
+    display: flex; background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; width: 100%; max-width: 420px; margin: 0 auto;
   }
-
-  .btn-login {
-    width: 100%;
-    padding: 16px;
+  .code-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    padding: 16px 20px; font-family: 'Share Tech Mono', monospace;
+    font-size: 1.3rem; letter-spacing: 6px; color: var(--neon);
+    text-transform: uppercase; text-align: center; caret-color: var(--neon);
+  }
+  .code-input::placeholder { color: var(--text2); letter-spacing: 2px; font-size: 0.9rem; }
+  .btn-connect {
     background: linear-gradient(135deg, var(--neon), #00c4b0);
-    border: none;
-    border-radius: 10px;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 4px;
-    color: #030810;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
+    color: #040d12; border: none; padding: 16px 32px;
+    font-family: 'Orbitron', monospace; font-size: 0.8rem;
+    font-weight: 700; letter-spacing: 2px; cursor: pointer;
+    transition: all 0.3s; min-width: 130px;
   }
-  .btn-login:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,255,231,0.3); }
-  .btn-login:active { transform: translateY(0); }
-  .btn-login.loading { opacity: 0.7; pointer-events: none; }
-
-  .error-msg {
-    background: rgba(255,45,120,0.1);
-    border: 1px solid rgba(255,45,120,0.3);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--neon2);
-    margin-bottom: 20px;
-    display: none;
-    letter-spacing: 1px;
+  .btn-connect:hover { filter: brightness(1.2); }
+  .wa-link-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .wa-link-section p { font-size: 0.85rem; color: var(--text2); margin-bottom: 14px; font-family: 'Share Tech Mono', monospace; }
+  .btn-wa {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #128C7E; color: #fff; padding: 14px 28px;
+    border-radius: 10px; text-decoration: none;
+    font-family: 'Orbitron', monospace; font-size: 0.8rem;
+    letter-spacing: 2px; transition: all 0.3s; font-weight: 700;
   }
-  .error-msg.show { display: block; }
-
-  .back-link {
-    display: block;
-    text-align: center;
-    margin-top: 24px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text2);
-    text-decoration: none;
-    letter-spacing: 2px;
-    transition: color 0.3s;
+  .btn-wa:hover { background: #075E54; transform: translateY(-2px); }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0; }
+  .feature-pill {
+    background: rgba(0,255,231,0.04); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 16px; text-align: center; transition: all 0.3s;
   }
-  .back-link:hover { color: var(--neon); }
-
-  .warning {
-    background: rgba(255,165,0,0.08);
-    border: 1px solid rgba(255,165,0,0.2);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.7rem;
-    color: #ffa500;
-    letter-spacing: 1px;
-    margin-top: 20px;
-    text-align: center;
+  .feature-pill:hover { border-color: rgba(0,255,231,0.4); background: rgba(0,255,231,0.08); }
+  .feature-pill .icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .feature-pill .name { font-family: 'Orbitron', monospace; font-size: 0.7rem; letter-spacing: 2px; color: var(--neon); margin-bottom: 4px; }
+  .feature-pill .desc { font-size: 0.8rem; color: var(--text2); }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--surface); border: 1px solid var(--neon);
+    border-radius: 10px; padding: 14px 24px;
+    font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+    color: var(--neon); transition: transform 0.4s; z-index: 1000;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--neon2); color: var(--neon2); }
+  footer { text-align: center; padding: 40px 0 20px; border-top: 1px solid var(--border); font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--text2); letter-spacing: 2px; }
+  @media(max-width:600px) {
+    .connect-card { padding: 28px 20px; }
+    .code-input-wrapper { flex-direction: column; }
+    .btn-connect { border-radius: 0 0 8px 8px; }
   }
 </style>
 </head>
@@ -178,65 +148,129 @@
 <div class="orb orb1"></div>
 <div class="orb orb2"></div>
 
-<div class="login-box">
-  <div class="logo">
-    <div class="shield">🛡️</div>
-    <h1>ADMIN ACCESS</h1>
-    <p class="sub">// nexusbot control panel</p>
+<div class="container">
+  <header>
+    <div class="logo-ring">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </div>
+    <h1 id="botName">NEXUSBOT</h1>
+    <p class="tagline">Your Smart WhatsApp Automation Hub</p>
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">CHECKING...</span>
+    </div>
+  </header>
+
+  <div class="section-title">How to Connect</div>
+  <div class="steps-grid">
+    <div class="step-card">
+      <span class="step-num">01</span>
+      <span class="step-icon">🔑</span>
+      <h3>Get Your Code</h3>
+      <p>Receive a unique 8-character pairing code from the admin.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-num">02</span>
+      <span class="step-icon">📲</span>
+      <h3>Send the Code</h3>
+      <p>Enter your code below and click Open WhatsApp. Send it to the bot.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-num">03</span>
+      <span class="step-icon">🚀</span>
+      <h3>Start Using</h3>
+      <p>You're connected! Type <strong>.menu</strong> to see all features.</p>
+    </div>
   </div>
 
-  <div class="error-msg" id="errorMsg">⚠ Invalid password. Access denied.</div>
-
-  <div class="field">
-    <label>Admin Password</label>
-    <input type="password" id="password" placeholder="••••••••••••" autocomplete="current-password"/>
+  <div class="connect-card">
+    <h2>ENTER PAIRING CODE</h2>
+    <p class="subtitle">// paste your 8-character code below</p>
+    <div class="code-input-wrapper">
+      <input class="code-input" id="codeInput" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false"/>
+      <button class="btn-connect" onclick="connectNow()">CONNECT</button>
+    </div>
+    <div class="wa-link-section">
+      <p>// OR open WhatsApp directly and send your code to the bot</p>
+      <a id="waLink" href="#" class="btn-wa" target="_blank">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        OPEN WHATSAPP
+      </a>
+    </div>
   </div>
 
-  <button class="btn-login" id="loginBtn" onclick="doLogin()">LOGIN → DASHBOARD</button>
-
-  <div class="warning">
-    ⚠ RESTRICTED ACCESS · ADMINS ONLY
+  <div class="section-title">Bot Features</div>
+  <div class="features-grid">
+    <div class="feature-pill"><div class="icon">📸</div><div class="name">INSTAGRAM</div><div class="desc">Download reels & posts</div></div>
+    <div class="feature-pill"><div class="icon">🐦</div><div class="name">TWITTER/X</div><div class="desc">Save videos & GIFs</div></div>
+    <div class="feature-pill"><div class="icon">📘</div><div class="name">FACEBOOK</div><div class="desc">Download FB videos</div></div>
+    <div class="feature-pill"><div class="icon">▶️</div><div class="name">TIKTOK</div><div class="desc">No-watermark downloads</div></div>
+    <div class="feature-pill"><div class="icon">👁️</div><div class="name">AUTO STATUS</div><div class="desc">View & react to statuses</div></div>
+    <div class="feature-pill"><div class="icon">🤖</div><div class="name">AI CHAT</div><div class="desc">GPT-powered answers</div></div>
+    <div class="feature-pill"><div class="icon">🌤️</div><div class="name">WEATHER</div><div class="desc">Live weather updates</div></div>
+    <div class="feature-pill"><div class="icon">📰</div><div class="name">NEWS</div><div class="desc">Latest headlines</div></div>
   </div>
 
-  <a href="/" class="back-link">← BACK TO CONNECT PAGE</a>
+  <footer>&copy; 2024 NEXUSBOT · ALL RIGHTS RESERVED</footer>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-document.getElementById('password').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin()
-})
+  let botNumber = ''
 
-async function doLogin() {
-  const pw = document.getElementById('password').value.trim()
-  if (!pw) return
-  const btn = document.getElementById('loginBtn')
-  btn.classList.add('loading')
-  btn.textContent = 'VERIFYING...'
-
-  try {
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw })
+  fetch('/api/bot-info')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('botName').textContent = data.botName?.toUpperCase() || 'NEXUSBOT'
+      document.title = data.botName + ' — Connect Your WhatsApp'
+      botNumber = data.adminNumber || ''
+      const dot = document.getElementById('statusDot')
+      const txt = document.getElementById('statusText')
+      if (data.status === 'online') {
+        dot.className = 'status-dot online'
+        txt.textContent = 'BOT ONLINE — READY TO CONNECT'
+      } else {
+        dot.className = 'status-dot offline'
+        txt.textContent = 'BOT OFFLINE'
+      }
     })
-    const data = await res.json()
-    if (data.success) {
-      btn.textContent = 'ACCESS GRANTED ✓'
-      setTimeout(() => { window.location.href = '/dashboard.html' }, 600)
-    } else {
-      document.getElementById('errorMsg').classList.add('show')
-      btn.classList.remove('loading')
-      btn.textContent = 'LOGIN → DASHBOARD'
-      document.getElementById('password').value = ''
-      document.getElementById('password').focus()
+    .catch(() => {
+      document.getElementById('statusText').textContent = 'UNABLE TO REACH SERVER'
+    })
+
+  document.getElementById('codeInput').addEventListener('input', function() {
+    this.value = this.value.toUpperCase().replace(/[^A-F0-9]/g, '')
+    const code = this.value
+    if (botNumber) {
+      document.getElementById('waLink').href = 'https://wa.me/' + botNumber + '?text=' + code
     }
-  } catch {
-    document.getElementById('errorMsg').textContent = '⚠ Server error. Is the bot running?'
-    document.getElementById('errorMsg').classList.add('show')
-    btn.classList.remove('loading')
-    btn.textContent = 'LOGIN → DASHBOARD'
+  })
+
+  document.getElementById('codeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') connectNow()
+  })
+
+  function connectNow() {
+    const code = document.getElementById('codeInput').value.trim()
+    if (code.length !== 8) {
+      showToast('⚠ Enter your full 8-character code', true)
+      return
+    }
+    if (botNumber) {
+      document.getElementById('waLink').href = 'https://wa.me/' + botNumber + '?text=' + code
+      window.open('https://wa.me/' + botNumber + '?text=' + code, '_blank')
+    } else {
+      showToast('✅ Send this code to the bot: ' + code)
+    }
   }
-}
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.className = 'toast show' + (isError ? ' error' : '')
+    setTimeout(() => { t.className = 'toast' + (isError ? ' error' : '') }, 3500)
+  }
 </script>
 </body>
 </html>
